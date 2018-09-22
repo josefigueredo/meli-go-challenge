@@ -76,7 +76,6 @@ func main() {
 					v.usuarios[newUser] = 1
 				}
 				v.promedio.promedioParcial, v.promedio.cantidad = partialAverage(v.promedio.promedioParcial, newAmount, v.promedio.cantidad)
-				v.promedio.cantidad++
 				v.lib.Add(newAmount)
 				mapMetricas[newType] = v
 			} else {
@@ -84,6 +83,7 @@ func main() {
 				newMetricaUsuario := make(map[string]int64)
 				newMetricaUsuario[newUser] = 1
 				newPromedio := promedio{newAmount, 1}
+				newPromedio.promedioParcial, newPromedio.cantidad = partialAverage(newPromedio.promedioParcial, newAmount, newPromedio.cantidad)
 				t, _ := tdigest.New()
 				t.Add(newAmount)
 				newMetricaOperacion := metricaOperacion{newMetricaUsuario, newPromedio, "", *t, 0}
@@ -142,7 +142,7 @@ func extractValues(line string) (string, string, float64, error) {
 
 // partialAverage realiza el calculo parcial del promedio
 func partialAverage(currentAvg float64, newNumber float64, count int64) (float64, int64) {
-	currentAvg += newNumber - currentAvg/float64(count)
+	currentAvg += ((newNumber - currentAvg) / float64(count))
 	count++
 	return currentAvg, count
 }

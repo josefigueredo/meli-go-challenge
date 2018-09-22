@@ -1,3 +1,4 @@
+# Version 0.1
 2018/09/21 18:56:46 Type:  pago
 2018/09/21 18:56:46   Usuario Top:      Kung
 2018/09/21 18:56:46   promedio:         1835354078425370
@@ -15,3 +16,22 @@
 2018/09/21 18:56:46   promedio:         1836779623994662
 2018/09/21 18:56:46   Percentile 95th:  3503097847643547
 2018/09/21 18:56:46 Lineas no parseables del archivo:  850
+
+# Version 0.2: Correccion y optimizacion
+2018/09/22 10:24:38 Type:  inversión
+2018/09/22 10:24:38   Usuario Top:      Kung
+2018/09/22 10:24:38   Promedio:         13174543663381762048
+2018/09/22 10:24:38   Percentile 95th:  3500563992677639
+2018/09/22 10:24:38 Type:  descuento
+2018/09/22 10:24:38   Usuario Top:      Carlos
+2018/09/22 10:24:38   Promedio:         13214718832740268032
+2018/09/22 10:24:38   Percentile 95th:  3503298923524647
+2018/09/22 10:24:38 Type:  pago
+2018/09/22 10:24:38   Usuario Top:      Kung
+2018/09/22 10:24:38   Promedio:         12976657204570742784
+2018/09/22 10:24:38   Percentile 95th:  3486335575197393
+2018/09/22 10:24:38 Type:  cobro
+2018/09/22 10:24:38   Usuario Top:      Juan
+2018/09/22 10:24:38   Promedio:         13047399324530927616
+2018/09/22 10:24:38   Percentile 95th:  3493777077445527
+2018/09/22 10:24:38 Lineas no parseables del archivo:  850
