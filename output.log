@@ -35,3 +35,22 @@
 2018/09/22 10:24:38   Promedio:         13047399324530927616
 2018/09/22 10:24:38   Percentile 95th:  3493777077445527
 2018/09/22 10:24:38 Lineas no parseables del archivo:  850
+
+# Version 0.3: Correccion de calculo de promedio y usuario top
+2018/09/22 11:41:52 Type:  descuento
+2018/09/22 11:41:52   Usuario Top:      Carlos
+2018/09/22 11:41:52   Promedio:         1836894118399486
+2018/09/22 11:41:52   Percentile 95th:  3503298923524647
+2018/09/22 11:41:52 Type:  pago
+2018/09/22 11:41:52   Usuario Top:      Kung
+2018/09/22 11:41:52   Promedio:         1835255193553158
+2018/09/22 11:41:52   Percentile 95th:  3486335575197393
+2018/09/22 11:41:52 Type:  cobro
+2018/09/22 11:41:52   Usuario Top:      Juan
+2018/09/22 11:41:52   Promedio:         1849814946119375
+2018/09/22 11:41:52   Percentile 95th:  3493777077445527
+2018/09/22 11:41:52 Type:  inversión
+2018/09/22 11:41:52   Usuario Top:      Kung
+2018/09/22 11:41:52   Promedio:         1833904805321737
+2018/09/22 11:41:52   Percentile 95th:  3500563992677639
+2018/09/22 11:41:52 Lineas no parseables del archivo:  850

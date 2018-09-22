@@ -22,6 +22,13 @@ import (
  *   Percentil 95 para cada tipo de operación
  */
 
+ /*
+  * Documentacion:
+  * https://www.stevenengelhardt.com/postseries/calculating-percentiles-on-streaming-data/
+  * https://mapr.com/blog/better-anomaly-detection-t-digest-whiteboard-walkthrough/
+  */
+
+
 type promedio struct {
 	promedioParcial float64 // valor parcial del promedio (se calcula sin suma/cant)
 	cantidad        int64   // cantidad de amounts, podria sacarse de len(amounts) de raiz
