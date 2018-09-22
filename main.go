@@ -24,8 +24,11 @@ import (
 
  /*
   * Documentacion:
-  * https://www.stevenengelhardt.com/postseries/calculating-percentiles-on-streaming-data/
-  * https://mapr.com/blog/better-anomaly-detection-t-digest-whiteboard-walkthrough/
+  * Average/Nean
+  *  http://www.heikohoffmann.de/htmlthesis/node134.html
+  * Percentile
+  *  https://www.stevenengelhardt.com/postseries/calculating-percentiles-on-streaming-data/
+  *  https://mapr.com/blog/better-anomaly-detection-t-digest-whiteboard-walkthrough/
   */
 
 
