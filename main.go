@@ -3,11 +3,11 @@ package main
 import (
 	"bufio"
 	"errors"
+	"fmt"
+	"github.com/caio/go-tdigest"
 	"io/ioutil"
 	"log"
-	"math"
 	"os"
-	"sort"
 	"strconv"
 	"strings"
 )
@@ -23,22 +23,20 @@ import (
  */
 
 type promedio struct {
-	promedioParcial int64 // valor parcial del promedio (se calcula sin suma/cant)
-	cantidad        int64 // cantidad de amounts, podria sacarse de len(amounts) de raiz
+	promedioParcial float64 // valor parcial del promedio (se calcula sin suma/cant)
+	cantidad        int64   // cantidad de amounts, podria sacarse de len(amounts) de raiz
 }
 
 // Metrica de Una categoria
 type metricaOperacion struct {
-	usuarios    map[string]int64 // Mapa de key: usuarioNombre, value: cantidad de operaciones del tipo raiz
-	promedio    promedio // struct
-	usuarioTop  string // nombreUsuaio del que mas operaciones realizo para esta categoria
-	amounts     []int64 // lista de amounts
-	perc95thInt int64 // valor de la lista de amounts mas cercano al percentil 95vo
-	perc95th    float64 // no se usa, percentil en float
+	usuarios   map[string]int64 // Mapa de key: usuarioNombre, value: cantidad de operaciones del tipo raiz
+	promedio   promedio         // struct
+	usuarioTop string           // nombreUsuaio del que mas operaciones realizo para esta categoria
+	lib        tdigest.TDigest  // lib que implementa streamed percentile, via ranged quantiles
+	perc95th   float64          // percentil 95vo en float
 }
 
 func main() {
-
 	// Si el argumento es nodebug, no se muestran valores de log. Para no ensuciar los test y benchmarks
 	if len(os.Args) > 1 && os.Args[1] == "nodebug" {
 		log.SetFlags(0)
@@ -66,30 +64,29 @@ func main() {
 		newUser, newType, newAmount, err := extractValues(line)
 
 		if err == nil {
-
 			v, ok := mapMetricas[newType]
 			if ok {
 				// Existe la Categoria
-				_, ok := v.usuarios[newUser]
+				u, ok := v.usuarios[newUser]
 				if ok {
 					// Existe el usuario
-					v.usuarios[newUser]++
+					v.usuarios[newUser] = u + 1
 				} else {
 					// Nuevo usuario
 					v.usuarios[newUser] = 1
 				}
-				v.promedio.promedioParcial = partialAverage(v.promedio.promedioParcial, newAmount, v.promedio.cantidad)
+				v.promedio.promedioParcial, v.promedio.cantidad = partialAverage(v.promedio.promedioParcial, newAmount, v.promedio.cantidad)
 				v.promedio.cantidad++
-				v.amounts = insertSort(v.amounts, newAmount)
+				v.lib.Add(newAmount)
 				mapMetricas[newType] = v
 			} else {
 				// Nueva Categoria
 				newMetricaUsuario := make(map[string]int64)
 				newMetricaUsuario[newUser] = 1
 				newPromedio := promedio{newAmount, 1}
-				var newAmounts []int64
-				newAmounts = append(newAmounts, newAmount)
-				newMetricaOperacion := metricaOperacion{newMetricaUsuario, newPromedio, "", newAmounts, 0, 0}
+				t, _ := tdigest.New()
+				t.Add(newAmount)
+				newMetricaOperacion := metricaOperacion{newMetricaUsuario, newPromedio, "", *t, 0}
 				mapMetricas[newType] = newMetricaOperacion
 			}
 		} else {
@@ -115,7 +112,7 @@ func main() {
 
 // extractValues extrae los valores user, type y amount de la linea leida del archivo,
 // si no puede da error
-func extractValues(line string) (string, string, int64, error) {
+func extractValues(line string) (string, string, float64, error) {
 	newUser := ""
 	if strings.Contains(line, "user:") && strings.Contains(line, "] ") {
 		start := strings.Index(line, "user:") + 5
@@ -128,11 +125,11 @@ func extractValues(line string) (string, string, int64, error) {
 		end := strings.Index(line, "] [ammount:")
 		newType = line[start:end]
 	}
-	var newNumber int64
-	if strings.Contains(line, "ammount:") && strings.Contains(line,"]") {
+	var newNumber float64
+	if strings.Contains(line, "ammount:") && strings.Contains(line, "]") {
 		start := strings.Index(line, "ammount:") + 8
 		end := strings.LastIndex(line, "]")
-		newNumber, _ = strconv.ParseInt(line[start:end], 10, 64)
+		newNumber, _ = strconv.ParseFloat(line[start:end], 64)
 	}
 
 	if newNumber == 0 {
@@ -144,29 +141,19 @@ func extractValues(line string) (string, string, int64, error) {
 }
 
 // partialAverage realiza el calculo parcial del promedio
-func partialAverage(currentAvg int64, newNumber int64, count int64) int64 {
-	currentAvg += (newNumber - currentAvg) / count
+func partialAverage(currentAvg float64, newNumber float64, count int64) (float64, int64) {
+	currentAvg += newNumber - currentAvg/float64(count)
 	count++
-	return currentAvg
+	return currentAvg, count
 }
-
-// insertSort inserta en una lista de int64 un valor de manera ordenada de menor a mayor
-func insertSort(data []int64, el int64) []int64 {
-	index := sort.Search(len(data), func(i int) bool { return data[i] > el })
-	data = append(data, 0)
-	copy(data[index+1:], data[index:])
-	data[index] = el
-	return data
-}
-
 
 // postProcess recibe un mapa de metricaOperacion y calcula el usuario con mayor cantidad de movimientos
 // y el percentil 95vo.
-func postProcess(mapa map[string]metricaOperacion) (map[string]metricaOperacion) {
+func postProcess(mapa map[string]metricaOperacion) map[string]metricaOperacion {
 	var vAnterior int64
-	mult := float64(0.95)
 	for k, v := range mapa {
-		v.perc95thInt = v.amounts[int64(math.Round(float64(len(v.amounts))*mult))]
+		vAnterior = 0
+		v.perc95th = v.lib.Quantile(0.95)
 		for kk, vv := range v.usuarios {
 			if v.usuarioTop == "" {
 				v.usuarioTop = kk
@@ -174,6 +161,7 @@ func postProcess(mapa map[string]metricaOperacion) (map[string]metricaOperacion)
 			} else {
 				if vAnterior < vv {
 					v.usuarioTop = kk
+					vAnterior = vv
 				}
 			}
 		}
@@ -183,13 +171,12 @@ func postProcess(mapa map[string]metricaOperacion) (map[string]metricaOperacion)
 }
 
 // showData recibe un mapa de metricaOperacion y muestra por consola el resultado del proceso
-func showData(mapa map[string]metricaOperacion) (map[string]metricaOperacion) {
+func showData(mapa map[string]metricaOperacion) map[string]metricaOperacion {
 	for k, v := range mapa {
 		log.Println("Type: ", k)
 		log.Println("  Usuario Top:     ", v.usuarioTop)
-		log.Println("  promedio:        ", v.promedio.promedioParcial)
-		log.Println("  Percentile 95th: ", v.perc95thInt)
+		log.Println("  Promedio:        ", fmt.Sprintf("%.f", v.promedio.promedioParcial))
+		log.Println("  Percentile 95th: ", fmt.Sprintf("%.f", v.perc95th))
 	}
 	return mapa
 }
-
